@@ -62,18 +62,18 @@ if [ "$model" = 'sd1.5' ]; then
     # Command to run torch with specific parameters
     torchrun --standalone --nproc_per_node=4 sid_train.py \
     --outdir 'image_experiment/sid-lsg-train-runs/' \
-    --data '/data/datasets/MS-COCO-256/val' \
+    --data 'data/datasets/MS-COCO-256/val' \
     --train_mode 1 \
     --cfg_train_fake 2 \
     --cfg_eval_fake 2 \
     --cfg_eval_real 2 \
     --optimizer 'adam' \
-    --data_prompt_text '/data/datasets/aesthetics_6_plus' \
+    --data_prompt_text 'data' \
     --resolution 512 \
     --alpha 1 \
     --init_timestep 625 \
     --batch 512 \
-    --fp16 0 \
+    --fp16 1 \
     --batch-gpu 1 \
     --sd_model "runwayml/stable-diffusion-v1-5" \
     --tick 2 \
@@ -84,7 +84,6 @@ if [ "$model" = 'sd1.5' ]; then
     --duration 10 \
     --enable_xformers 1 \
     --gradient_checkpointing 0 \
-    --metrics 'fid30k_full' \
     --ema 0.05
     #--nosubdir  \
     #--metrics 'fid_30k_full' \
