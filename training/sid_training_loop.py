@@ -200,8 +200,7 @@ def training_loop(
         dataset_obj = dnnlib.util.construct_class_by_name(**dataset_prompt_text_kwargs) # subclass of training.dataset.Dataset
     #dataset_sampler = misc.InfiniteSampler(dataset=dataset_obj, rank=dist.get_rank(), num_replicas=dist.get_world_size(), seed=seed)
     #dataset_iterator = iter(torch.utils.data.DataLoader(dataset=dataset_obj, sampler=dataset_sampler, batch_size=batch_gpu, **data_loader_kwargs))
-    
-    
+
     dtype=torch.float16 if network_kwargs.use_fp16 else torch.float32
     
     
@@ -362,22 +361,6 @@ def training_loop(
                 images = torch.cat(images).cpu().numpy()
                 save_image_grid(img=images, fname=os.path.join(run_dir, 'fakes_init.png'), drange=[-1,1], grid_size=grid_size)
                 del images
-                
-#             if metrics is not None:    
-#                 for metric in metrics:
-
-#                     result_dict = metric_main.calc_metric(metric=metric, metric_pt_path=metric_pt_path, metric_open_clip_path=metric_open_clip_path, metric_clip_path=metric_clip_path,
-#                         G=partial(sid_sd_sampler,unet=G_ema,noise_scheduler=noise_scheduler,
-#                                                  text_encoder=text_encoder, tokenizer=tokenizer, 
-#                                                  resolution=resolution,dtype=dtype,return_images=True,vae=vae,num_steps=num_steps,train_sampler=False,num_steps_eval=1),
-#                         init_timestep=init_timestep,
-#                         dataset_kwargs=dataset_kwargs, num_gpus=dist.get_world_size(), rank=dist.get_rank(), local_rank=dist.get_local_rank(), device=device)
-#                     if dist.get_rank() == 0:
-#                         print(result_dict.results)
-#                         metric_main.report_metric(result_dict, run_dir=run_dir, snapshot_pkl=f'fakes_{alpha:03f}_{cur_nimg//1000:06d}.png', alpha=alpha)          
-#                         stats_metrics.update(result_dict.results)
-            
-        torch.distributed.barrier() 
         
         dist.print0('Start Running')
         while True:
@@ -624,13 +607,20 @@ def training_loop(
                             result_dict = metric_main.calc_metric(metric=metric, metric_pt_path=metric_pt_path,
                                                                   metric_open_clip_path=metric_open_clip_path,
                                                                   metric_clip_path=metric_clip_path,
-                                                                  G=partial(sid_sd_sampler, unet=G_ema, noise_scheduler=noise_scheduler,
-                                                                            text_encoder=text_encoder, tokenizer=tokenizer,
-                                                                            resolution=resolution, dtype=dtype, return_images=True, vae=vae, num_steps=num_steps,
-                                                                            train_sampler=False, num_steps_eval=1),
+                                                                  G=partial(sid_sd_sampler, unet=G_ema,
+                                                                            noise_scheduler=noise_scheduler,
+                                                                            text_encoder=text_encoder,
+                                                                            tokenizer=tokenizer,
+                                                                            resolution=resolution, dtype=dtype,
+                                                                            return_images=True, vae=vae,
+                                                                            num_steps=num_steps, train_sampler=False,
+                                                                            num_steps_eval=1),
                                                                   init_timestep=init_timestep,
-                                                                  dataset_kwargs=dataset_kwargs, num_gpus=dist.get_world_size(),
-                                                                  rank=dist.get_rank(), local_rank=dist.get_local_rank(), device=device)
+                                                                  dataset_kwargs=dataset_kwargs,
+                                                                  num_gpus=dist.get_world_size(),
+                                                                  rank=dist.get_rank(),
+                                                                  local_rank=dist.get_local_rank(),
+                                                                  device=device)
                             if dist.get_rank() == 0:
                                 print(result_dict.results)
                                 metric_main.report_metric(result_dict, run_dir=run_dir, snapshot_pkl=f'fakes_{alpha:03f}_{cur_nimg//1000:06d}.png', alpha=alpha)          
